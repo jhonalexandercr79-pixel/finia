@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>finIA — Finanzas Personales</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F0E17;--bg2:#161523;--bg3:#1E1C2E;--bg4:#252336;
+  --purple:#7B6EE8;--purple-light:#A99EF5;--purple-dim:#3D3876;
+  --teal:#1EC99A;--teal-dim:#0D6B51;
+  --coral:#E8624A;--coral-dim:#7A2E1A;
+  --amber:#F0A830;--amber-dim:#7A5510;
+  --text:#EEE9FF;--text2:#9B95C4;--text3:#5C5880;
+  --border:#2A2645;--border2:#3D3876;
+  --font-display:'Fraunces',serif;
+  --font-body:'Outfit',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;line-height:1.6;min-height:100vh;}
+
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh;}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:6px;}
+.main{overflow:auto;}
+
+.logo{font-family:var(--font-display);font-size:20px;color:var(--text);margin-bottom:24px;padding:0 8px;}
+.logo span{color:var(--purple-light);font-style:italic;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;font-weight:400;transition:all .15s;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--purple-dim);color:var(--purple-light);}
+.nav-icon{width:16px;text-align:center;font-size:14px;}
+.sidebar-divider{height:1px;background:var(--border);margin:12px 0;}
+.month-badge{margin:auto 0 0;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:12px;}
+.month-label{color:var(--text3);font-size:11px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
+.month-val{font-family:var(--font-mono);font-size:18px;color:var(--teal);}
+.month-sub{color:var(--text3);font-size:11px;margin-top:2px;}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid var(--border);}
+.page-title{font-family:var(--font-display);font-size:22px;font-weight:300;}
+.page-title em{color:var(--purple-light);}
+.header-right{display:flex;align-items:center;gap:10px;}
+.btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:var(--font-body);transition:all .15s;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--bg3);color:var(--text);}
+.btn-primary{background:var(--purple);color:white;}
+.btn-primary:hover{background:var(--purple-light);color:var(--bg);}
+
+.content{padding:24px 28px;display:none;}
+.content.active{display:block;}
+
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+.metric-value{font-family:var(--font-mono);font-size:22px;font-weight:500;}
+.metric-delta{font-size:11px;margin-top:5px;}
+.up{color:var(--teal);}
+.down{color:var(--coral);}
+.neutral{color:var(--text3);}
+
+.charts-row{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:24px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.card-title{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:16px;}
+
+.bar-chart{display:flex;flex-direction:column;gap:10px;}
+.bar-row{display:flex;align-items:center;gap:10px;}
+.bar-cat{font-size:12px;color:var(--text2);width:80px;flex-shrink:0;}
+.bar-track{flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+.bar-amt{font-family:var(--font-mono);font-size:11px;color:var(--text3);width:55px;text-align:right;flex-shrink:0;}
+
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+.donut-legend{width:100%;display:flex;flex-direction:column;gap:8px;}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.legend-label{color:var(--text2);flex:1;}
+.legend-pct{font-family:var(--font-mono);color:var(--text3);font-size:11px;}
+
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+
+.tx-list{display:flex;flex-direction:column;gap:0;}
+.tx-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+.tx-item:last-child{border-bottom:none;}
+.tx-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.tx-info{flex:1;}
+.tx-name{font-size:13px;font-weight:400;}
+.tx-cat{font-size:11px;color:var(--text3);}
+.tx-amount{font-family:var(--font-mono);font-size:13px;font-weight:500;}
+.tx-date{font-size:11px;color:var(--text3);margin-top:1px;text-align:right;}
+
+.meta-list{display:flex;flex-direction:column;gap:14px;}
+.meta-item{}
+.meta-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.meta-name{font-size:13px;}
+.meta-vals{font-family:var(--font-mono);font-size:11px;color:var(--text3);}
+.meta-track{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;}
+.meta-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+.meta-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+
+.alert-list{display:flex;flex-direction:column;gap:10px;}
+.alert-item{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:10px;border:1px solid;}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.alert-title{font-size:13px;font-weight:500;margin-bottom:2px;}
+.alert-desc{font-size:12px;opacity:.75;}
+.alert-warn{background:rgba(240,168,48,.07);border-color:rgba(240,168,48,.25);}
+.alert-warn .alert-title{color:var(--amber);}
+.alert-danger{background:rgba(232,98,74,.07);border-color:rgba(232,98,74,.25);}
+.alert-danger .alert-title{color:var(--coral);}
+.alert-ok{background:rgba(30,201,154,.07);border-color:rgba(30,201,154,.25);}
+.alert-ok .alert-title{color:var(--teal);}
+
+.ai-area{display:flex;flex-direction:column;height:calc(100vh - 65px);}
+.chat-messages{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:16px;}
+.msg{max-width:75%;display:flex;flex-direction:column;gap:4px;}
+.msg.user{align-self:flex-end;align-items:flex-end;}
+.msg.ai{align-self:flex-start;align-items:flex-start;}
+.msg-bubble{padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.6;}
+.msg.user .msg-bubble{background:var(--purple-dim);border:1px solid var(--purple);color:var(--text);}
+.msg.ai .msg-bubble{background:var(--bg2);border:1px solid var(--border);color:var(--text);}
+.msg-meta{font-size:11px;color:var(--text3);}
+.ai-label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--purple-light);margin-bottom:4px;}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:var(--purple-light);}
+.chat-input-area{padding:16px 28px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end;}
+.chat-input{flex:1;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:13px;resize:none;min-height:42px;max-height:120px;outline:none;line-height:1.5;}
+.chat-input:focus{border-color:var(--purple);}
+.thinking{display:flex;gap:5px;align-items:center;padding:12px 16px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--purple-light);animation:bounce .9s infinite;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+.quick-chips{display:flex;gap:8px;flex-wrap:wrap;padding:0 28px 12px;}
+.chip{padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:99px;font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;}
+.chip:hover{border-color:var(--purple);color:var(--purple-light);}
+
+.tx-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:500px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+.form-input,.form-select{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;transition:border .15s;}
+.form-input:focus,.form-select:focus{border-color:var(--purple);}
+.form-select option{background:var(--bg3);}
+.form-actions{grid-column:1/-1;display:flex;gap:10px;margin-top:4px;}
+
+.limit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+.limit-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.limit-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.limit-cat{font-size:13px;font-weight:400;}
+.limit-badge{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:6px;}
+.badge-ok{background:rgba(30,201,154,.15);color:var(--teal);}
+.badge-warn{background:rgba(240,168,48,.15);color:var(--amber);}
+.badge-over{background:rgba(232,98,74,.15);color:var(--coral);}
+.limit-track{height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-bottom:6px;}
+.limit-fill{height:100%;border-radius:4px;}
+.limit-info{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);font-family:var(--font-mono);}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-title{font-family:var(--font-display);font-size:16px;font-weight:300;color:var(--text);}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="sidebar">
+  <div class="logo">fin<span>IA</span></div>
+  <button class="nav-item active" onclick="showTab('dashboard',this)"><span class="nav-icon">◈</span> Dashboard</button>
+  <button class="nav-item" onclick="showTab('transacciones',this)"><span class="nav-icon">↕</span> Transacciones</button>
+  <button class="nav-item" onclick="showTab('metas',this)"><span class="nav-icon">◎</span> Metas</button>
+  <button class="nav-item" onclick="showTab('limites',this)"><span class="nav-icon">⚡</span> Alertas</button>
+  <div class="sidebar-divider"></div>
+  <button class="nav-item" onclick="showTab('ai',this)"><span class="nav-icon">✦</span> IA Financiera</button>
+  <div class="month-badge">
+    <div class="month-label">Balance del mes</div>
+    <div class="month-val" id="sidebar-balance">$1,620</div>
+    <div class="month-sub">Abril 2026</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="header">
+    <div class="page-title" id="page-title">Vista <em>general</em></div>
+    <div class="header-right">
+      <button class="btn btn-ghost" onclick="showTab('transacciones', document.querySelectorAll('.nav-item')[1])">+ Transacción</button>
+      <button class="btn btn-primary" onclick="showTab('ai', document.querySelectorAll('.nav-item')[4])">✦ Preguntarle a la IA</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="content active" id="tab-dashboard">
+    <div class="metrics-grid">
+      <div class="metric"><div class="metric-label">Ingresos</div><div class="metric-value" style="color:var(--teal)">$4,280</div><div class="metric-delta up">↑ 8.2% vs marzo</div></div>
+      <div class="metric"><div class="metric-label">Gastos</div><div class="metric-value" style="color:var(--coral)">$2,660</div><div class="metric-delta down">↑ 12.4% vs marzo</div></div>
+      <div class="metric"><div class="metric-label">Ahorro neto</div><div class="metric-value">$1,620</div><div class="metric-delta up">37.9% tasa de ahorro</div></div>
+      <div class="metric"><div class="metric-label">Metas activas</div><div class="metric-value" style="color:var(--purple-light)">3</div><div class="metric-delta neutral">1 en riesgo</div></div>
+    </div>
+    <div class="charts-row">
+      <div class="card"><div class="card-title">Gastos por categoría — abril</div><div class="bar-chart" id="bar-chart-main"></div></div>
+      <div class="card">
+        <div class="card-title">Distribución de ingresos</div>
+        <div class="donut-wrap">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="52" fill="none" stroke="#1E1C2E" stroke-width="22"/>
+            <circle cx="70" cy="70" r="52" fill="none" stroke="#7B6EE8" stroke-width="22" stroke-dasharray="164 163" stroke-dashoffset="0" transform="rotate(-90 70 70)"/>
+            <circle cx="70" cy="70" r="52" fill="none" stroke="#1EC99A" stroke-width="22" stroke-dasharray="98 229" stroke-dashoffset="-164" transform="rotate(-90 70 70)"/>
+            <circle cx="70" cy="70" r="52" fill="none" stroke="#E8624A" stroke-width="22" stroke-dasharray="65 262" stroke-dashoffset="-262" transform="rotate(-90 70 70)"/>
+            <text x="70" y="66" text-anchor="middle" fill="#EEE9FF" font-family="'Fraunces',serif" font-size="18" font-weight="300">$4,280</text>
+            <text x="70" y="82" text-anchor="middle" fill="#5C5880" font-family="'Outfit',sans-serif" font-size="10">total</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#7B6EE8"></div><div class="legend-label">Salario principal</div><div class="legend-pct">48%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#1EC99A"></div><div class="legend-label">Freelance</div><div class="legend-pct">29%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#E8624A"></div><div class="legend-label">Inversiones</div><div class="legend-pct">19%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#5C5880"></div><div class="legend-label">Otros</div><div class="legend-pct">4%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-row">
+      <div class="card"><div class="card-title">Transacciones recientes</div><div class="tx-list" id="recent-tx"></div></div>
+      <div class="card"><div class="card-title">Metas de ahorro</div><div class="meta-list" id="metas-preview"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Alertas activas</div>
+      <div class="alert-list">
+        <div class="alert-item alert-warn"><div class="alert-icon">⚡</div><div><div class="alert-title">Entretenimiento cerca del límite</div><div class="alert-desc">Has gastado $185 de tu límite de $200. Queda $15.</div></div></div>
+        <div class="alert-item alert-danger"><div class="alert-icon">◉</div><div><div class="alert-title">Restaurantes superó el límite</div><div class="alert-desc">Gastaste $340 vs límite de $300. Exceso de $40.</div></div></div>
+        <div class="alert-item alert-ok"><div class="alert-icon">✓</div><div><div class="alert-title">Transporte bajo control</div><div class="alert-desc">$95 de $150 usado. Vas bien este mes.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSACCIONES -->
+  <div class="content" id="tab-transacciones">
+    <div class="section-header"><div class="section-title">Nueva transacción</div></div>
+    <div class="card" style="margin-bottom:24px;">
+      <div class="tx-form">
+        <div class="form-group"><label class="form-label">Descripción</label><input class="form-input" id="f-desc" placeholder="Ej: Mercado Éxito"/></div>
+        <div class="form-group"><label class="form-label">Monto ($)</label><input class="form-input" id="f-amount" type="number" placeholder="0"/></div>
+        <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="f-type"><option value="gasto">Gasto</option><option value="ingreso">Ingreso</option></select></div>
+        <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="f-cat"><option>Vivienda</option><option>Alimentación</option><option>Transporte</option><option>Salud</option><option>Entretenimiento</option><option>Restaurantes</option><option>Ropa</option><option>Educación</option><option>Inversiones</option><option>Otro</option></select></div>
+        <div class="form-group"><label class="form-label">Fecha</label><input class="form-input" id="f-date" type="date"/></div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="addTransaction()">Registrar</button><button class="btn btn-ghost" onclick="clearForm()">Limpiar</button></div>
+      </div>
+    </div>
+    <div class="section-header"><div class="section-title">Historial</div></div>
+    <div class="card"><div class="tx-list" id="all-tx"></div></div>
+  </div>
+
+  <!-- METAS -->
+  <div class="content" id="tab-metas">
+    <div class="section-header"><div class="section-title">Metas de ahorro</div></div>
+    <div class="card" style="margin-bottom:24px;">
+      <div class="tx-form">
+        <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="m-name" placeholder="Ej: Viaje a Europa"/></div>
+        <div class="form-group"><label class="form-label">Objetivo ($)</label><input class="form-input" id="m-target" type="number" placeholder="5000"/></div>
+        <div class="form-group"><label class="form-label">Ahorrado ($)</label><input class="form-input" id="m-current" type="number" placeholder="0"/></div>
+        <div class="form-group"><label class="form-label">Fecha límite</label><input class="form-input" id="m-date" type="date"/></div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="addMeta()">Crear meta</button></div>
+      </div>
+    </div>
+    <div id="metas-full"></div>
+  </div>
+
+  <!-- LÍMITES -->
+  <div class="content" id="tab-limites">
+    <div class="section-header"><div class="section-title">Límites por categoría</div></div>
+    <div class="limit-grid" id="limit-grid"></div>
+    <div class="card">
+      <div class="card-title">Configurar límite</div>
+      <div class="tx-form">
+        <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="l-cat"><option>Vivienda</option><option>Alimentación</option><option>Transporte</option><option>Salud</option><option>Entretenimiento</option><option>Restaurantes</option><option>Ropa</option><option>Educación</option></select></div>
+        <div class="form-group"><label class="form-label">Límite mensual ($)</label><input class="form-input" id="l-val" type="number" placeholder="300"/></div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="setLimit()">Guardar límite</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IA -->
+  <div class="content" id="tab-ai">
+    <div class="ai-area">
+      <div class="chat-messages" id="chat-messages">
+        <div class="msg ai">
+          <div class="ai-label"><div class="ai-dot"></div> IA Financiera</div>
+          <div class="msg-bubble">Hola, soy tu asistente financiero personal. Tengo acceso a tus datos de ingresos, gastos y metas. Puedo analizar tus patrones, sugerirte dónde reducir gastos, o proyectar cuándo alcanzarás tus metas. ¿En qué te ayudo hoy?</div>
+          <div class="msg-meta">ahora</div>
+        </div>
+      </div>
+      <div class="quick-chips">
+        <div class="chip" onclick="sendQuick('¿Cómo van mis finanzas este mes?')">¿Cómo voy este mes?</div>
+        <div class="chip" onclick="sendQuick('¿En qué categoría estoy gastando más?')">¿Dónde gasto más?</div>
+        <div class="chip" onclick="sendQuick('¿Cuándo alcanzaré mi meta más importante?')">Proyección de metas</div>
+        <div class="chip" onclick="sendQuick('Dame 3 consejos para reducir mis gastos')">Consejos de ahorro</div>
+      </div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chat-input" placeholder="Pregúntale a tu IA financiera..." rows="1" onkeydown="handleKey(event)"></textarea>
+        <button class="btn btn-primary" onclick="sendMessage()">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const CATS={
+  'Vivienda':{color:'#7B6EE8',icon:'🏠'},'Alimentación':{color:'#1EC99A',icon:'🛒'},
+  'Transporte':{color:'#F0A830',icon:'🚌'},'Salud':{color:'#E8624A',icon:'💊'},
+  'Entretenimiento':{color:'#A99EF5',icon:'🎬'},'Restaurantes':{color:'#E8624A',icon:'🍽️'},
+  'Ropa':{color:'#D4537E',icon:'👗'},'Educación':{color:'#378ADD',icon:'📚'},
+  'Inversiones':{color:'#1EC99A',icon:'📈'},'Otro':{color:'#5C5880',icon:'◦'},
+};
+
+let transactions=[
+  {id:1,desc:'Arriendo apartamento',amount:1200,type:'gasto',cat:'Vivienda',date:'2026-04-01'},
+  {id:2,desc:'Salario empresa',amount:2800,type:'ingreso',cat:'Otro',date:'2026-04-01'},
+  {id:3,desc:'Supermercado Éxito',amount:180,type:'gasto',cat:'Alimentación',date:'2026-04-03'},
+  {id:4,desc:'Freelance diseño',amount:650,type:'ingreso',cat:'Otro',date:'2026-04-05'},
+  {id:5,desc:'Netflix + Spotify',amount:28,type:'gasto',cat:'Entretenimiento',date:'2026-04-06'},
+  {id:6,desc:'Gasolina',amount:60,type:'gasto',cat:'Transporte',date:'2026-04-08'},
+  {id:7,desc:'Restaurante Ilusión',amount:85,type:'gasto',cat:'Restaurantes',date:'2026-04-10'},
+  {id:8,desc:'Dividendos ETF',amount:420,type:'ingreso',cat:'Inversiones',date:'2026-04-12'},
+  {id:9,desc:'Farmacia',amount:45,type:'gasto',cat:'Salud',date:'2026-04-14'},
+  {id:10,desc:'Cine + cena',amount:72,type:'gasto',cat:'Entretenimiento',date:'2026-04-17'},
+];
+
+let metas=[
+  {name:'Fondo de emergencia',target:5000,current:3200,date:'2026-09-01'},
+  {name:'Viaje a Europa',target:3500,current:840,date:'2027-06-01'},
+  {name:'MacBook Pro',target:2400,current:1920,date:'2026-07-01'},
+];
+
+let limits={'Vivienda':1300,'Alimentación':250,'Transporte':150,'Entretenimiento':200,'Restaurantes':300,'Salud':100,'Ropa':150,'Educación':100};
+
+function getGastosByCat(){
+  const g={};
+  transactions.filter(t=>t.type==='gasto').forEach(t=>{g[t.cat]=(g[t.cat]||0)+t.amount;});
+  return g;
+}
+
+function renderBarChart(){
+  const g=getGastosByCat();
+  const sorted=Object.entries(g).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const max=sorted[0]?.[1]||1;
+  document.getElementById('bar-chart-main').innerHTML=sorted.map(([cat,amt])=>`
+    <div class="bar-row">
+      <div class="bar-cat">${cat}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(amt/max*100)}%;background:${CATS[cat]?.color||'#7B6EE8'}"></div></div>
+      <div class="bar-amt">$${amt}</div>
+    </div>`).join('');
+}
+
+function renderTx(id,limit=5){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=transactions.slice(-limit).reverse().map(t=>`
+    <div class="tx-item">
+      <div class="tx-icon" style="background:${CATS[t.cat]?.color||'#3D3876'}22">${CATS[t.cat]?.icon||'◦'}</div>
+      <div class="tx-info"><div class="tx-name">${t.desc}</div><div class="tx-cat">${t.cat}</div></div>
+      <div>
+        <div class="tx-amount" style="color:${t.type==='ingreso'?'var(--teal)':'var(--coral)'}">${t.type==='ingreso'?'+':'-'}$${t.amount}</div>
+        <div class="tx-date">${t.date}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderMetas(id,preview=false){
+  const el=document.getElementById(id);if(!el)return;
+  if(preview){
+    el.innerHTML=metas.map(m=>{
+      const p=Math.min(100,Math.round(m.current/m.target*100));
+      const col=p>=75?'var(--teal)':p>=40?'var(--amber)':'var(--coral)';
+      return `<div class="meta-item">
+        <div class="meta-header"><span class="meta-name">${m.name}</span><span class="meta-vals">$${m.current}/$${m.target}</span></div>
+        <div class="meta-track"><div class="meta-fill" style="width:${p}%;background:${col}"></div></div>
+        <div class="meta-sub">${p}% logrado · meta: ${m.date}</div>
+      </div>`;
+    }).join('');
+  } else {
+    el.innerHTML=metas.map((m,i)=>{
+      const p=Math.min(100,Math.round(m.current/m.target*100));
+      const col=p>=75?'var(--teal)':p>=40?'var(--amber)':'var(--coral)';
+      return `<div class="card" style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-size:15px;">${m.name}</div>
+          <button class="btn btn-ghost" onclick="abonarMeta(${i})" style="font-size:11px;padding:5px 12px;">+ Abonar</button>
+        </div>
+        <div style="display:flex;gap:24px;margin-bottom:12px;">
+          <div><div class="metric-label">Ahorrado</div><div style="font-family:var(--font-mono);font-size:18px;color:${col}">$${m.current}</div></div>
+          <div><div class="metric-label">Objetivo</div><div style="font-family:var(--font-mono);font-size:18px;">$${m.target}</div></div>
+          <div><div class="metric-label">Restante</div><div style="font-family:var(--font-mono);font-size:18px;color:var(--text2)">$${m.target-m.current}</div></div>
+          <div><div class="metric-label">Progreso</div><div style="font-family:var(--font-mono);font-size:18px;color:${col}">${p}%</div></div>
+        </div>
+        <div class="meta-track" style="height:10px;"><div class="meta-fill" style="width:${p}%;background:${col}"></div></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;">Fecha límite: ${m.date}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderLimits(){
+  const g=getGastosByCat();
+  const el=document.getElementById('limit-grid');if(!el)return;
+  el.innerHTML=Object.entries(limits).map(([cat,lim])=>{
+    const spent=g[cat]||0;
+    const p=Math.min(100,Math.round(spent/lim*100));
+    const status=p>=100?'over':p>=80?'warn':'ok';
+    const col=status==='over'?'var(--coral)':status==='warn'?'var(--amber)':'var(--teal)';
+    const badge=status==='over'?`<span class="limit-badge badge-over">Excedido</span>`:
+                status==='warn'?`<span class="limit-badge badge-warn">${p}%</span>`:
+                `<span class="limit-badge badge-ok">OK</span>`;
+    return `<div class="limit-card">
+      <div class="limit-header"><span class="limit-cat">${CATS[cat]?.icon||''} ${cat}</span>${badge}</div>
+      <div class="limit-track"><div class="limit-fill" style="width:${p}%;background:${col}"></div></div>
+      <div class="limit-info"><span>$${spent} gastado</span><span>límite $${lim}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderAll(){
+  renderBarChart();renderTx('recent-tx',5);renderTx('all-tx',50);
+  renderMetas('metas-preview',true);renderMetas('metas-full',false);renderLimits();
+  const ing=transactions.filter(t=>t.type==='ingreso').reduce((s,t)=>s+t.amount,0);
+  const gas=transactions.filter(t=>t.type==='gasto').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('sidebar-balance').textContent='$'+(ing-gas).toLocaleString();
+}
+
+function showTab(tab,btn){
+  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+  const titles={dashboard:'Vista <em>general</em>',transacciones:'Mis <em>transacciones</em>',metas:'Metas <em>de ahorro</em>',limites:'Alertas <em>y límites</em>',ai:'IA <em>financiera</em>'};
+  document.getElementById('page-title').innerHTML=titles[tab]||tab;
+  renderAll();
+}
+
+function addTransaction(){
+  const desc=document.getElementById('f-desc').value.trim();
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  const type=document.getElementById('f-type').value;
+  const cat=document.getElementById('f-cat').value;
+  const date=document.getElementById('f-date').value||new Date().toISOString().split('T')[0];
+  if(!desc||!amount)return;
+  transactions.push({id:Date.now(),desc,amount,type,cat,date});
+  clearForm();renderAll();
+}
+function clearForm(){['f-desc','f-amount','f-date'].forEach(id=>document.getElementById(id).value='');}
+function addMeta(){
+  const name=document.getElementById('m-name').value.trim();
+  const target=parseFloat(document.getElementById('m-target').value);
+  const current=parseFloat(document.getElementById('m-current').value)||0;
+  const date=document.getElementById('m-date').value;
+  if(!name||!target)return;
+  metas.push({name,target,current,date});
+  ['m-name','m-target','m-current','m-date'].forEach(id=>document.getElementById(id).value='');
+  renderAll();
+}
+function abonarMeta(i){
+  const v=parseFloat(prompt('¿Cuánto quieres abonar?')||0);
+  if(v>0){metas[i].current=Math.min(metas[i].target,metas[i].current+v);renderAll();}
+}
+function setLimit(){
+  const cat=document.getElementById('l-cat').value;
+  const val=parseFloat(document.getElementById('l-val').value);
+  if(val>0){limits[cat]=val;renderAll();}
+}
+
+let chatHistory=[];
+function getFinancialContext(){
+  const ing=transactions.filter(t=>t.type==='ingreso').reduce((s,t)=>s+t.amount,0);
+  const gas=transactions.filter(t=>t.type==='gasto').reduce((s,t)=>s+t.amount,0);
+  return `DATOS FINANCIEROS (abril 2026):
+Ingresos: $${ing} | Gastos: $${gas} | Balance: $${ing-gas} | Ahorro: ${Math.round((ing-gas)/ing*100)}%
+Gastos por categoría: ${JSON.stringify(getGastosByCat())}
+Límites: ${JSON.stringify(limits)}
+Metas: ${metas.map(m=>`${m.name}: $${m.current}/$${m.target} (${Math.round(m.current/m.target*100)}%)`).join(', ')}
+Últimas transacciones: ${transactions.slice(-6).map(t=>`${t.desc} ${t.type==='ingreso'?'+':'-'}$${t.amount}`).join(', ')}`;
+}
+
+async function sendMessage(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();if(!text)return;
+  input.value='';
+  appendMsg('user',text);
+  chatHistory.push({role:'user',content:text});
+  const thinking=appendThinking();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:`Eres un asesor financiero personal integrado en la app finIA. Tienes acceso a los datos del usuario. Responde en español, de forma concisa y accionable (máximo 3-4 párrafos). Usa datos específicos. No uses markdown con asteriscos ni hashtags.`,
+        messages:[{role:'user',content:`${getFinancialContext()}\n\nPregunta: ${text}`},...chatHistory.slice(1).slice(-6)]
+      })
+    });
+    const data=await res.json();
+    thinking.remove();
+    appendMsg('ai',data.content?.[0]?.text||'Error al procesar.');
+    chatHistory.push({role:'assistant',content:data.content?.[0]?.text||''});
+  }catch(e){thinking.remove();appendMsg('ai','Error de conexión. Intenta de nuevo.');}
+}
+
+function appendMsg(role,text){
+  const el=document.getElementById('chat-messages');
+  const time=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  const div=document.createElement('div');div.className=`msg ${role}`;
+  div.innerHTML=role==='ai'
+    ?`<div class="ai-label"><div class="ai-dot"></div> IA Financiera</div><div class="msg-bubble">${text}</div><div class="msg-meta">${time}</div>`
+    :`<div class="msg-bubble">${text}</div><div class="msg-meta">${time}</div>`;
+  el.appendChild(div);el.scrollTop=el.scrollHeight;return div;
+}
+
+function appendThinking(){
+  const el=document.getElementById('chat-messages');
+  const div=document.createElement('div');div.className='msg ai';
+  div.innerHTML=`<div class="ai-label"><div class="ai-dot"></div> IA Financiera</div><div class="msg-bubble"><div class="thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  el.appendChild(div);el.scrollTop=el.scrollHeight;return div;
+}
+
+function sendQuick(text){
+  document.getElementById('chat-input').value=text;
+  showTab('ai',document.querySelectorAll('.nav-item')[4]);
+  sendMessage();
+}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+
+document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+renderAll();
+</script>
+</body>
+</html>
